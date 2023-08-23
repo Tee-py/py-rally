@@ -1,0 +1,9 @@
+/node_modules
+/.ruff_cache
+/.pytest_cache
+/venv
+.coverage
+.txt
+package-lock.json
+package.json
+*.js
