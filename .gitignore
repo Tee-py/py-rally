@@ -7,3 +7,5 @@
 package-lock.json
 package.json
 *.js
+__pycache__/
+.idea/
