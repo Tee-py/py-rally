@@ -7,7 +7,7 @@ from eth_abi import encode
 from py_rally.abis import FORWARDER_ABI, RELAY_HUB_ABI
 from py_rally.config import NetworkConfig
 from py_rally.constants import OK_RESPONSE
-from py_rally.custom_types import Account, GSNServerConfigPayload, GSNTransaction, RelayHttpRequest, RelayRequest
+from py_rally.custom_types import Account, GSNServerConfigResponse, GSNTransaction, RelayHttpRequest, RelayRequest
 from py_rally.exceptions import RallyAPIError
 from py_rally.helpers import calculate_call_data_cost, estimate_gas_without_call_data, sign_relay_request
 
@@ -26,8 +26,8 @@ class RallyGSNClient:
             headers=self.auth_header,
         )
         if response.status_code != OK_RESPONSE:
-            raise RallyAPIError(f'Failed to fetch config from API: {response.text}')
-        server_config: GSNServerConfigPayload = response.json()
+            raise RallyAPIError(response.status_code, response.text)
+        server_config: GSNServerConfigResponse = response.json()
         self.config.gsn_config.relay_worker_address = server_config['relayWorkerAddress']
         # Update Txn Fee per Gas
         suggested_min_priority_fee = server_config['minMaxPriorityFeePerGas']
@@ -159,14 +159,26 @@ class RallyGSNClient:
         prefixed_request_id = raw_rly_request_id.replace(raw_rly_request_id[:prefix_size], '0' * prefix_size)
         return f'0x{prefixed_request_id}'
 
-    def relay_transaction(self, account: Account, txn: GSNTransaction):
+    def submit_transaction(self, account: Account, txn: GSNTransaction) -> str:
+        """
+        Submits user transaction data to Rally API
+        :param account: User Account
+        :param txn: User Transaction
+        :return: transaction_hash
+        """
+
         self._update_config(txn)
         relay_request = self._build_relay_request(txn, account)
         http_request = self._build_relay_http_request(relay_request, account)
         request_id = self._get_relay_request_id(relay_request, http_request['metadata']['signature'])
         http_request['metadata']['relayRequestId'] = request_id
-        requests.post(
+        response = requests.post(
             f'{self.config.gsn_config.relay_url}/relay',
             data=http_request,
             headers=self.auth_header,
         )
+        if response.status_code == OK_RESPONSE:
+            tx_hash = response.json()['signedTx']
+            self.config.web3.eth.wait_for_transaction_receipt(tx_hash)
+            return tx_hash
+        raise RallyAPIError(response.status_code, response.text)

@@ -27,7 +27,7 @@ python_files = ["test_*.py"]
 [tool.coverage.run]
 branch = true
 source = ["py_rally"]
-omit = ["*/tests/*", "conftest.py"]
+omit = ["*/tests/*", "conftest.py", "py_rally/exceptions.py"]
 
 [tool.black]
 line-length = 120

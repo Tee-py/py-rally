@@ -34,7 +34,7 @@ class GSNTransaction(TypedDict):
     client_id: int
 
 
-class GSNServerConfigPayload(TypedDict):
+class GSNServerConfigResponse(TypedDict):
     relayWorkerAddress: str
     relayManagerAddress: str
     relayHubAddress: str

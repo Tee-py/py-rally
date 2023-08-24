@@ -1,6 +1,8 @@
 import pytest
 
 from py_rally.custom_types import Account, GSNTransaction, RelayRequest
+from py_rally.config import NetworkConfig, GSNConfig
+from web3 import HTTPProvider, Web3
 
 
 @pytest.fixture()
@@ -82,3 +84,8 @@ def account() -> Account:
         '0x18d17d375047503d4b3127a61d0ac6a37a22a3e5a11a612f853e5c5eadc37235',
         '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487',
     )
+
+
+@pytest.fixture(scope='module')
+def test_config() -> NetworkConfig:
+    pass
