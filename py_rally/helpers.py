@@ -1,4 +1,5 @@
 from typing import Dict, Tuple
+import copy
 
 from eth_account.messages import encode_structured_data
 from web3 import Web3
@@ -57,7 +58,7 @@ def sign_typed_data(domain: EIP721DomainType, types: Dict, message: Dict, primar
 
 
 def sign_relay_request(request: RelayRequest, domain_separator: str, chain_id: int, account: Account) -> str:
-    cloned_request = request.copy()
+    cloned_request: dict = copy.deepcopy(request)
     cloned_request['request']['value'] = int(cloned_request['request']['value'])
     cloned_request['request']['gas'] = int(cloned_request['request']['gas'])
     cloned_request['request']['nonce'] = int(cloned_request['request']['nonce'])

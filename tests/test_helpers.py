@@ -25,8 +25,8 @@ def test_estimate_gas_without_call_data(txn: GSNTransaction, call_data):
     assert int(cost, 16) == (int(txn['gas'], 16) - call_data['cost'])
 
 
-def test_sign_relay_request(relay_request: RelayRequest, account: Account):
-    signature = sign_relay_request(relay_request, 'Test', 1, account)
+def test_sign_relay_request(relay_request: RelayRequest, signature_account: Account):
+    signature = sign_relay_request(relay_request, 'Test', 1, signature_account)
     assert (
         signature == '0xcabf842b2c918efd73e9c82ad3587f8403080edb369e5389ef75071c230a9a9c2a99c2b826e'
         'db72ffea13ddeb0ea1d5525311771ca73bab26b3960e9a06f8f511b'

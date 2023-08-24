@@ -64,7 +64,7 @@ ForwarderRequest = TypedDict(
 
 
 class RelayHttpRequestMetadata(TypedDict):
-    maxAcceptanceBudget: int
+    maxAcceptanceBudget: str
     relayHubAddress: str
     signature: str
     approvalData: str

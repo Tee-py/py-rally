@@ -3,6 +3,8 @@ import pytest
 from py_rally.custom_types import Account, GSNTransaction, RelayRequest
 from py_rally.config import NetworkConfig, GSNConfig
 from web3 import HTTPProvider, Web3
+from web3.middleware import geth_poa_middleware
+import eth_account
 
 
 @pytest.fixture()
@@ -79,13 +81,50 @@ def relay_request() -> RelayRequest:
 
 
 @pytest.fixture()
-def account() -> Account:
+def signature_account() -> Account:
     return Account(
         '0x18d17d375047503d4b3127a61d0ac6a37a22a3e5a11a612f853e5c5eadc37235',
-        '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487',
+        '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487'
+    )
+
+
+@pytest.fixture()
+def client_account() -> Account:
+    account = eth_account.Account.create()
+    return Account(
+        account.key.hex(),
+        account.address,
     )
 
 
 @pytest.fixture(scope='module')
 def test_config() -> NetworkConfig:
-    pass
+    gsn_config = GSNConfig(
+        paymaster_address='0x8b3a505413Ca3B0A17F077e507aF8E3b3ad4Ce4d',
+        forwarder_address='0xB2b5841DBeF766d4b521221732F9B618fCf34A87',
+        relay_hub_address='0x3232f21A6E08312654270c78A773f00dd61d60f5',
+        relay_worker_address='0xb9950b71ec94cbb274aeb1be98e697678077a17f',
+        relay_url='https://api.rallyprotocol.com',
+        rpc_url='https://polygon-mumbai.g.alchemy.com/v2/-dYNjZXvre3GC9kYtwDzzX4N8tcgomU4',
+        chain_id=80001,
+        max_acceptance_budget=285252,
+        domain_separator_name='GSN Relayed Transaction',
+        gtx_data_zero=16,
+        gtx_data_non_zero=4,
+        request_valid_seconds=172800,
+        max_paymaster_data_length=300,
+        max_approval_data_length=300,
+        max_relay_nonce_gap=3,
+    )
+
+    network_config = NetworkConfig(
+        contracts={
+            'rly_erc20': '0x1C7312Cb60b40cF586e796FEdD60Cf243286c9E9',
+            'faucet': '0xe7C3BD692C77Ec0C0bde523455B9D142c49720fF',
+        },
+        gsn_config=gsn_config,
+        web3=Web3(HTTPProvider(gsn_config.rpc_url)),
+        relayer_api_key='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOjg1fQ.49JEPyNayLLbdoBglzQNajw01U6_qcLGMd3lkVl5gzZgKrHhuiANIu0vsK_nHXNF-QIValD_vJZOZbk_rHIVLg',
+    )
+    network_config.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
+    return network_config
