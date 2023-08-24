@@ -1,4 +1,5 @@
 import pytest
+import os
 
 from py_rally.custom_types import Account, GSNTransaction, RelayRequest
 from py_rally.config import NetworkConfig, GSNConfig
@@ -105,7 +106,7 @@ def test_config() -> NetworkConfig:
         relay_hub_address='0x3232f21A6E08312654270c78A773f00dd61d60f5',
         relay_worker_address='0xb9950b71ec94cbb274aeb1be98e697678077a17f',
         relay_url='https://api.rallyprotocol.com',
-        rpc_url='https://polygon-mumbai.g.alchemy.com/v2/-dYNjZXvre3GC9kYtwDzzX4N8tcgomU4',
+        rpc_url=os.getenv('MUMBAI_RPC_URL'),
         chain_id=80001,
         max_acceptance_budget=285252,
         domain_separator_name='GSN Relayed Transaction',
@@ -124,7 +125,7 @@ def test_config() -> NetworkConfig:
         },
         gsn_config=gsn_config,
         web3=Web3(HTTPProvider(gsn_config.rpc_url)),
-        relayer_api_key='eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOjg1fQ.49JEPyNayLLbdoBglzQNajw01U6_qcLGMd3lkVl5gzZgKrHhuiANIu0vsK_nHXNF-QIValD_vJZOZbk_rHIVLg',
+        relayer_api_key=os.getenv('RLY_API_KEY'),
     )
     network_config.web3.middleware_onion.inject(geth_poa_middleware, layer=0)
     return network_config

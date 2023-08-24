@@ -8,6 +8,7 @@ package-lock.json
 package.json
 http-req2.json
 http-request.json
+.env.test
 *.js
 __pycache__/
 .idea/
