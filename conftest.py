@@ -1,11 +1,12 @@
-import pytest
 import os
 
-from py_rally.custom_types import Account, GSNTransaction, RelayRequest
-from py_rally.config import NetworkConfig, GSNConfig
+import eth_account
+import pytest
 from web3 import HTTPProvider, Web3
 from web3.middleware import geth_poa_middleware
-import eth_account
+
+from py_rally.config import GSNConfig, NetworkConfig
+from py_rally.custom_types import Account, GSNTransaction, RelayRequest
 
 
 @pytest.fixture()
@@ -85,7 +86,7 @@ def relay_request() -> RelayRequest:
 def signature_account() -> Account:
     return Account(
         '0x18d17d375047503d4b3127a61d0ac6a37a22a3e5a11a612f853e5c5eadc37235',
-        '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487'
+        '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487',
     )
 
 

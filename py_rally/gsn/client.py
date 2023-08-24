@@ -71,7 +71,7 @@ class RallyGSNClient:
             int(request_payload['request']['gas'], 16),
             int(request_payload['request']['nonce']),
             bytes.fromhex(request_payload['request']['data'][2:]),
-            int(request_payload['request']['validUntilTime'])
+            int(request_payload['request']['validUntilTime']),
         )
         relay_data_tuple = (
             int(request_payload['relayData']['maxFeePerGas'], 16),
@@ -81,7 +81,7 @@ class RallyGSNClient:
             checksum_fun(request_payload['relayData']['paymaster']),
             checksum_fun(request_payload['relayData']['forwarder']),
             bytes.fromhex(paymaster_data[2:]),
-            int(request_payload['relayData']['clientId'])
+            int(request_payload['relayData']['clientId']),
         )
         txn = relay_hub.functions.relayCall(
             self.config.gsn_config.domain_separator_name,
@@ -157,11 +157,10 @@ class RallyGSNClient:
             'domainSeparatorName': self.config.gsn_config.domain_separator_name,
             'relayRequestId': '',
         }
-        http_request = {
+        return {
             'relayRequest': relay_request,
             'metadata': metadata,
         }
-        return http_request
 
     def _get_relay_request_id(self, relay_request: RelayRequest, signature: str):
         types = ['address', 'uint256', 'bytes']
@@ -180,7 +179,7 @@ class RallyGSNClient:
 
     def _handle_response(self, response: requests.Response) -> str:
         data = response.json()
-        error = data.get("error")
+        error = data.get('error')
         if error is not None:
             raise RallyAPIError(response.status_code, error)
         signed_tx = data['signedTx']

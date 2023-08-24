@@ -1,5 +1,5 @@
-from typing import Dict, Tuple
 import copy
+from typing import Dict, Tuple
 
 from eth_account.messages import encode_structured_data
 from web3 import Web3
