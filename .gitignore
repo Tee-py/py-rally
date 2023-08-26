@@ -2,6 +2,7 @@
 /.ruff_cache
 /.pytest_cache
 /venv
+/.venv
 .coverage
 .txt
 package-lock.json
