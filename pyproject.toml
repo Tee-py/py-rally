@@ -24,6 +24,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py"]
+env_files = [".env.test"]
 
 [tool.coverage.run]
 branch = true
@@ -93,7 +94,7 @@ select = [
     "SLF",
     "RUF",
 ]
-exclude = ["node_modules", "venv"]
+exclude = ["node_modules", "venv", "__init__.py"]
 ignore = [
     "SIM115",
     "TRY003",

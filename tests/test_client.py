@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 
+from py_rally import RallyGSNClient
 from py_rally.abis import TOKEN_FAUCET_ABI
 from py_rally.config import NetworkConfig
 from py_rally.custom_types import Account, GSNTransaction
-from py_rally import RallyGSNClient
 
 
 @patch('requests.post')

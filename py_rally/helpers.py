@@ -1,5 +1,4 @@
 import copy
-from typing import Dict, Tuple
 
 from eth_account.messages import encode_structured_data
 from web3 import Web3
@@ -8,7 +7,7 @@ from py_rally.constants import DOMAIN_SEPARATOR_VERSION, EIP712TYPE, RELAY_DATA_
 from py_rally.custom_types import Account, EIP721DomainType, GSNTransaction, RelayRequest
 
 
-def calculate_zero_non_zero_bytes_from_data(data: str) -> Tuple[int, int]:
+def calculate_zero_non_zero_bytes_from_data(data: str) -> tuple[int, int]:
     zero_bytes = 0
     non_zero_bytes = 0
     bytes_str = bytes.fromhex(data.replace('0x', ''))
@@ -43,7 +42,7 @@ def estimate_gas_without_call_data(
     return hex(original_cost - call_data_cost)
 
 
-def sign_typed_data(domain: EIP721DomainType, types: Dict, message: Dict, primary_type: str, private_key: str) -> str:
+def sign_typed_data(domain: EIP721DomainType, types: dict, message: dict, primary_type: str, private_key: str) -> str:
     data = {
         'domain': domain,
         'types': types,
