@@ -1,9 +1,10 @@
 from unittest.mock import MagicMock, patch
 
-from py_rally import RallyGSNClient
+from py_rally import RallyGSNClient, RallyNetworkClient
 from py_rally.abis import TOKEN_FAUCET_ABI
 from py_rally.config import NetworkConfig
-from py_rally.custom_types import Account, GSNTransaction
+from py_rally.helpers import get_token_balance
+from py_rally.custom_types import Account, GSNTransaction, MetaTxMethod
 
 
 @patch('requests.post')
@@ -41,19 +42,31 @@ def test_rally_gsn_client(mock_requests, test_config: NetworkConfig, client_acco
     }
     mock_requests.return_value = mock_response
     gsn_client = RallyGSNClient(test_config)
-    token_faucet_address = test_config.web3.to_checksum_address(test_config.contracts['faucet'])
-    token_faucet_contract = test_config.web3.eth.contract(token_faucet_address, abi=TOKEN_FAUCET_ABI)
-    tx = token_faucet_contract.functions.claim().build_transaction({'from': client_account.address})
     gsn_txn: GSNTransaction = {
-        'from_address': tx['from'],
-        'to': tx['to'],
-        'data': tx['data'],
-        'max_fee_per_gas': hex(tx['maxFeePerGas']),
-        'max_priority_fee_per_gas': hex(tx['maxPriorityFeePerGas']),
-        'gas': hex(tx['gas']),
-        'value': tx['value'],
+        'from_address': '0xe125bd0209171a6b20B8758f7215e1a9330F2BcB',
+        'to': '0xe7C3BD692C77Ec0C0bde523455B9D142c49720fF',
+        'data': '0x4e71d92d',
+        'max_fee_per_gas': '0x6681a882',
+        'max_priority_fee_per_gas': '0x6681a860',
+        'gas': '0x13fd9',
+        'value': 0,
         'paymaster_data': '0x',
-        'client_id': 1,
+        'client_id': 1
     }
     tx_hash = gsn_client.submit_transaction(client_account, gsn_txn)
     assert tx_hash == '0x23b0e64773bf41780138a3182b676e8b4b38a92ae59eed4ae9fa8ab3f49fe4bd'
+
+
+def test_network_client(signature_account: Account, test_config: NetworkConfig):
+    gsn_client = RallyGSNClient(test_config)
+    network_client = RallyNetworkClient(gsn_client)
+
+    network_client.token_transfer(
+        signature_account,
+        '0x57c6E736FC7e6Ef96b7812FFc8AF6cFC8cdE028f',
+        1,
+        test_config.contracts['rly_erc20'],
+        MetaTxMethod.ExecuteMetaTransaction
+    )
+    # balance = get_token_balance(test_config.web3, test_config.contracts['rly_erc20'], signature_account)
+    # print(balance)

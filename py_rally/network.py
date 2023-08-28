@@ -1,0 +1,80 @@
+from dataclasses import dataclass
+
+from py_rally import RallyGSNClient
+from py_rally.custom_types import Account, GSNTransaction, MetaTxMethod
+from py_rally.exceptions import NetworkClientError
+from py_rally.helpers import get_token_balance, get_permit_txn, get_execute_meta_transaction_txn
+from typing import Optional
+from py_rally.config import NetworkConfig
+from py_rally.abis import TOKEN_FAUCET_ABI
+
+
+@dataclass
+class RallyNetworkClient:
+    gsn_client: RallyGSNClient
+
+    def _get_rly_claim_txn_for_account(self, account: Account):
+        token_faucet_address = self.gsn_client.config.web3.to_checksum_address(
+            self.gsn_client.config.contracts['faucet']
+        )
+        token_faucet_contract = self.gsn_client.config.web3.eth.contract(token_faucet_address, abi=TOKEN_FAUCET_ABI)
+        tx = token_faucet_contract.functions.claim().build_transaction({'from': account.address})
+        gsn_txn: GSNTransaction = {
+            'from_address': tx['from'],
+            'to': tx['to'],
+            'data': tx['data'],
+            'max_fee_per_gas': hex(tx['maxFeePerGas']),
+            'max_priority_fee_per_gas': hex(tx['maxPriorityFeePerGas']),
+            'gas': hex(tx['gas']),
+            'value': tx['value'],
+            'paymaster_data': '0x',
+            'client_id': 1,
+        }
+        return gsn_txn
+
+    def _get_token_transfer_txn(
+        self, account: Account, to: str, amount: float, erc20_token: str, meta_tx_method: Optional[MetaTxMethod] = None
+    ):
+        transfer_txn = None
+        if meta_tx_method == MetaTxMethod.Permit:
+            transfer_txn = get_permit_txn(
+                self.gsn_client.config.web3,
+                account,
+                to,
+                amount,
+                erc20_token
+            )
+        elif meta_tx_method == MetaTxMethod.ExecuteMetaTransaction:
+            transfer_txn = get_execute_meta_transaction_txn(
+                self.gsn_client.config.web3,
+                account,
+                to,
+                amount,
+                erc20_token,
+                str(self.gsn_client.config.gsn_config.chain_id)
+            )
+        else:
+            ...
+        return transfer_txn
+
+    def claim_rally(self, account: Account):
+        claim_txn = self._get_rly_claim_txn_for_account(account)
+        return self.relay_transaction(account, claim_txn)
+
+    def token_transfer(
+        self, account: Account, to: str, amount: float, erc20_token: str, meta_tx_method: Optional[MetaTxMethod] = None
+    ):
+        account_balance = get_token_balance(self.gsn_client.config.web3, erc20_token, account)
+        if (account_balance - amount) < 0:
+            raise NetworkClientError("Insufficient balance to execute transfer")
+        transfer_txn = self._get_token_transfer_txn(
+            account,
+            to,
+            amount,
+            erc20_token,
+            meta_tx_method
+        )
+        self.relay_transaction(account, transfer_txn)
+
+    def relay_transaction(self, signer: Account, txn: GSNTransaction):
+        return self.gsn_client.submit_transaction(signer, txn)

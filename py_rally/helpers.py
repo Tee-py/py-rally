@@ -2,8 +2,16 @@ import copy
 
 from eth_account.messages import encode_structured_data
 from web3 import Web3
+from web3.exceptions import ContractLogicError
 
-from py_rally.constants import DOMAIN_SEPARATOR_VERSION, EIP712TYPE, RELAY_DATA_SIGNED_TYPE, RELAY_REQUEST_SIGNED_TYPE
+from py_rally.constants import (
+    DOMAIN_SEPARATOR_VERSION,
+    EIP712TYPE,
+    RELAY_DATA_SIGNED_TYPE,
+    RELAY_REQUEST_SIGNED_TYPE,
+    EIP712_SALT_TYPE,
+)
+from py_rally.abis import ERC20_ABI
 from py_rally.custom_types import Account, EIP721DomainType, GSNTransaction, RelayRequest
 
 
@@ -91,3 +99,94 @@ def sign_relay_request(request: RelayRequest, domain_separator: str, chain_id: i
         'relayData': cloned_request['relayData'],
     }
     return sign_typed_data(domain, types, message, 'RelayRequest', account.private_key)
+
+
+def get_erc20_token(web3: Web3, token_address: str):
+    token_contract = web3.eth.contract(web3.to_checksum_address(token_address), abi=ERC20_ABI)
+    return token_contract
+
+
+def get_token_balance(web3: Web3, token_address: str, account: Account):
+    token_contract = get_erc20_token(web3, token_address)
+    balance = token_contract.functions.balanceOf(account.address).call()
+    decimals = token_contract.functions.decimals().call()
+    return balance / 10**decimals
+
+
+def get_meta_txn_eip_712_signature(account: Account, name: str, contract: str, data: str, nonce: int, chain_id: str):
+    salt = "0x00" + f"{int(chain_id):#0{64}x}"[2:]
+    types = {
+        'EIP712Domain': EIP712_SALT_TYPE,
+        'MetaTransaction': [
+            {'name': 'nonce', 'type': 'uint256'},
+            {'name': 'from', 'type': 'address'},
+            {'name': 'functionSignature', 'type': 'bytes'},
+        ],
+    }
+    domain = {'name': name, 'version': '1', 'verifyingContract': contract, 'salt': bytes.fromhex(salt[2:])}
+    message = {
+        'from': account.address,
+        'functionSignature': bytes.fromhex(data[2:]),
+        'nonce': nonce,
+    }
+    eip712_data = {
+        'domain': domain,
+        'message': message,
+        'primaryType': 'MetaTransaction',
+        'types': types,
+    }
+    signature = Web3().eth.account.sign_message(
+        encode_structured_data(eip712_data),
+        private_key=account.private_key,
+    )
+    return signature
+
+
+def get_permit_txn(web3: Web3, account: Account, to: str, amount: float, contract: str) -> GSNTransaction:
+    token_contract = get_erc20_token(web3, contract)
+    name = token_contract.functions.name().call()
+    nonce = token_contract.functions.getNonce(account.address).call()
+    decimals = token_contract.functions.decimals().call()
+    eip712_domain = token_contract.functions.eip712Domain().call()
+    latest_block = web3.eth.get_block('latest')
+    __import__("ipdb").set_trace()
+
+
+def get_execute_meta_transaction_txn(
+    web3: Web3, account: Account, to: str, amount: float, contract: str, chain_id: str
+) -> GSNTransaction:
+    token_contract = get_erc20_token(web3, contract)
+    name = token_contract.functions.name().call()
+    nonce = 0
+    try:
+        nonce = token_contract.functions.getNonce(account.address).call()
+    except ContractLogicError:
+        nonce = token_contract.functions.nonces(account.address).call()
+    decimals = token_contract.functions.decimals().call()
+    decimal_amount = amount * 10**decimals
+
+    transfer_data = token_contract.encodeABI('transfer', [to, decimal_amount])
+
+    signature = get_meta_txn_eip_712_signature(account, name, contract, transfer_data, nonce, chain_id)
+    r_value = signature.r
+    s_value = signature.s
+    v_value = signature.v
+    tx = token_contract.functions.executeMetaTransaction(
+        account.address,
+        bytes.fromhex(transfer_data[2:]),
+        bytes.fromhex(hex(r_value)[2:]),
+        bytes.fromhex(hex(s_value)[2:]),
+        v_value,
+    ).build_transaction({'from': account.address})
+    txn = {
+        'from_address': tx['from'],
+        'to': tx['to'],
+        'data': tx['data'],
+        'max_fee_per_gas': hex(tx['maxFeePerGas']),
+        'max_priority_fee_per_gas': hex(tx['maxPriorityFeePerGas']),
+        'gas': hex(tx['gas']),
+        'value': tx['value'],
+        'paymaster_data': '0x',
+        'client_id': 1,
+    }
+    return txn

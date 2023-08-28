@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 from typing import Optional, TypedDict
 
 
@@ -7,6 +8,15 @@ class EIP721DomainType(TypedDict):
     name: str
     verifyingContract: str
     version: str
+
+
+class MetaTxMethod(Enum):
+    Permit = 'permit'
+    ExecuteMetaTransaction = 'executeMetaTransaction'
+
+    @classmethod
+    def from_method_str(cls, value: str):
+        return cls(value)
 
 
 class EIP721MessageType(TypedDict):
