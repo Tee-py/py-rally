@@ -118,7 +118,6 @@ def test_config() -> NetworkConfig:
         max_approval_data_length=300,
         max_relay_nonce_gap=3,
     )
-
     network_config = NetworkConfig(
         contracts={
             'rly_erc20': '0x1C7312Cb60b40cF586e796FEdD60Cf243286c9E9',

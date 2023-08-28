@@ -4,14 +4,15 @@ from eth_account.messages import encode_structured_data
 from web3 import Web3
 from web3.exceptions import ContractLogicError
 
+from py_rally.abis import ERC20_ABI
 from py_rally.constants import (
     DOMAIN_SEPARATOR_VERSION,
+    EIP712_SALT_TYPE,
     EIP712TYPE,
+    HASH_ZERO,
     RELAY_DATA_SIGNED_TYPE,
     RELAY_REQUEST_SIGNED_TYPE,
-    EIP712_SALT_TYPE,
 )
-from py_rally.abis import ERC20_ABI
 from py_rally.custom_types import Account, EIP721DomainType, GSNTransaction, RelayRequest
 
 
@@ -102,8 +103,7 @@ def sign_relay_request(request: RelayRequest, domain_separator: str, chain_id: i
 
 
 def get_erc20_token(web3: Web3, token_address: str):
-    token_contract = web3.eth.contract(web3.to_checksum_address(token_address), abi=ERC20_ABI)
-    return token_contract
+    return web3.eth.contract(web3.to_checksum_address(token_address), abi=ERC20_ABI)
 
 
 def get_token_balance(web3: Web3, token_address: str, account: Account):
@@ -113,8 +113,8 @@ def get_token_balance(web3: Web3, token_address: str, account: Account):
     return balance / 10**decimals
 
 
-def get_meta_txn_eip_712_signature(account: Account, name: str, contract: str, data: str, nonce: int, chain_id: str):
-    salt = "0x00" + f"{int(chain_id):#0{64}x}"[2:]
+def get_meta_txn_eip712_signature(account: Account, name: str, contract: str, data: str, nonce: int, chain_id: str):
+    salt = '0x00' + f'{int(chain_id):#0{64}x}'[2:]
     types = {
         'EIP712Domain': EIP712_SALT_TYPE,
         'MetaTransaction': [
@@ -135,50 +135,57 @@ def get_meta_txn_eip_712_signature(account: Account, name: str, contract: str, d
         'primaryType': 'MetaTransaction',
         'types': types,
     }
-    signature = Web3().eth.account.sign_message(
+    return Web3().eth.account.sign_message(
         encode_structured_data(eip712_data),
         private_key=account.private_key,
     )
-    return signature
 
 
-def get_permit_txn(web3: Web3, account: Account, to: str, amount: float, contract: str) -> GSNTransaction:
-    token_contract = get_erc20_token(web3, contract)
-    name = token_contract.functions.name().call()
-    nonce = token_contract.functions.getNonce(account.address).call()
-    decimals = token_contract.functions.decimals().call()
-    eip712_domain = token_contract.functions.eip712Domain().call()
-    latest_block = web3.eth.get_block('latest')
-    __import__("ipdb").set_trace()
+def get_permit_eip712_signature(
+    account: Account,
+    spender: str,
+    decimal_amount: int,
+    name: str,
+    contract: str,
+    nonce: int,
+    deadline: int,
+    salt: str,
+    chain_id: int,
+):
+    types = {
+        'EIP712Domain': EIP712_SALT_TYPE,
+        'Permit': [
+            {'name': 'owner', 'type': 'address'},
+            {'name': 'spender', 'type': 'address'},
+            {'name': 'value', 'type': 'uint256'},
+            {'name': 'nonce', 'type': 'uint256'},
+            {'name': 'deadline', 'type': 'uint256'},
+        ],
+    }
+    domain = {'name': name, 'version': '1', 'chainId': chain_id, 'verifyingContract': contract}
+    if salt != HASH_ZERO:
+        domain['salt'] = salt
+    message = {
+        'owner': account.address,
+        'spender': spender,
+        'value': str(decimal_amount),
+        'nonce': nonce,
+        'deadline': deadline,
+    }
+    eip712_data = {
+        'domain': domain,
+        'message': message,
+        'primaryType': 'MetaTransaction',
+        'types': types,
+    }
+    return Web3().eth.account.sign_message(
+        encode_structured_data(eip712_data),
+        private_key=account.private_key,
+    )
 
 
-def get_execute_meta_transaction_txn(
-    web3: Web3, account: Account, to: str, amount: float, contract: str, chain_id: str
-) -> GSNTransaction:
-    token_contract = get_erc20_token(web3, contract)
-    name = token_contract.functions.name().call()
-    nonce = 0
-    try:
-        nonce = token_contract.functions.getNonce(account.address).call()
-    except ContractLogicError:
-        nonce = token_contract.functions.nonces(account.address).call()
-    decimals = token_contract.functions.decimals().call()
-    decimal_amount = amount * 10**decimals
-
-    transfer_data = token_contract.encodeABI('transfer', [to, decimal_amount])
-
-    signature = get_meta_txn_eip_712_signature(account, name, contract, transfer_data, nonce, chain_id)
-    r_value = signature.r
-    s_value = signature.s
-    v_value = signature.v
-    tx = token_contract.functions.executeMetaTransaction(
-        account.address,
-        bytes.fromhex(transfer_data[2:]),
-        bytes.fromhex(hex(r_value)[2:]),
-        bytes.fromhex(hex(s_value)[2:]),
-        v_value,
-    ).build_transaction({'from': account.address})
-    txn = {
+def tx_to_gsn_txn(tx: dict) -> GSNTransaction:
+    return {
         'from_address': tx['from'],
         'to': tx['to'],
         'data': tx['data'],
@@ -189,4 +196,88 @@ def get_execute_meta_transaction_txn(
         'paymaster_data': '0x',
         'client_id': 1,
     }
-    return txn
+
+
+def get_permit_txn(
+    web3: Web3,
+    account: Account,
+    paymaster_address: str,
+    to: str,
+    amount: float,
+    contract: str,
+    chain_id: int,
+) -> GSNTransaction:
+    token_contract = get_erc20_token(web3, contract)
+    name = token_contract.functions.name().call()
+    nonce = token_contract.functions.nonces(account.address).call()
+    decimals = token_contract.functions.decimals().call()
+    eip712_domain = token_contract.functions.eip712Domain().call()
+    salt = eip712_domain['salt']
+    latest_block = web3.eth.get_block('latest')
+    deadline = latest_block['timestamp'] + 45
+    decimal_amount = amount * 10**decimals
+    signed_message = get_permit_eip712_signature(
+        account,
+        paymaster_address,
+        decimal_amount,
+        name,
+        contract,
+        nonce,
+        deadline,
+        salt,
+        chain_id,
+    )
+    r_value = signed_message.r
+    s_value = signed_message.s
+    v_value = signed_message.v
+    permit_tx = token_contract.functions.permit(
+        account.address,
+        paymaster_address,
+        decimal_amount,
+        deadline,
+        v_value,
+        bytes.fromhex(hex(r_value)[2:]),
+        bytes.fromhex(hex(s_value)[2:]),
+    ).build_transaction({'from': account.address})
+    transfer_from_tx = token_contract.functions.transferFrom(
+        account.address,
+        to,
+        decimal_amount,
+    ).build_transaction()
+    paymaster_data = '0x' + contract.replace('0x', '') + transfer_from_tx['data'].replace('0x', '')
+    gsn_tx = tx_to_gsn_txn(permit_tx)
+    gsn_tx['paymaster_data'] = paymaster_data
+    return gsn_tx
+
+
+def get_execute_meta_transaction_txn(
+    web3: Web3,
+    account: Account,
+    to: str,
+    amount: float,
+    contract: str,
+    chain_id: str,
+) -> GSNTransaction:
+    token_contract = get_erc20_token(web3, contract)
+    name = token_contract.functions.name().call()
+    try:
+        nonce = token_contract.functions.getNonce(account.address).call()
+    except ContractLogicError:
+        nonce = token_contract.functions.nonces(account.address).call()
+    decimals = token_contract.functions.decimals().call()
+    decimal_amount = amount * 10**decimals
+
+    transfer_data = token_contract.encodeABI('transfer', [to, decimal_amount])
+
+    signature = get_meta_txn_eip712_signature(account, name, contract, transfer_data, nonce, chain_id)
+    r_value = signature.r
+    s_value = signature.s
+    v_value = signature.v
+    tx = token_contract.functions.executeMetaTransaction(
+        account.address,
+        bytes.fromhex(transfer_data[2:]),
+        bytes.fromhex(hex(r_value)[2:]),
+        bytes.fromhex(hex(s_value)[2:]),
+        v_value,
+    ).build_transaction({'from': account.address})
+    return tx_to_gsn_txn(tx)

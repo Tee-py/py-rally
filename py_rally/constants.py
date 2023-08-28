@@ -8,7 +8,7 @@ EIP712_SALT_TYPE = [
     {'name': 'name', 'type': 'string'},
     {'name': 'version', 'type': 'string'},
     {'name': 'verifyingContract', 'type': 'address'},
-    {'name': 'salt', 'type': 'bytes32'}
+    {'name': 'salt', 'type': 'bytes32'},
 ]
 FORWARDER_DATA_SIGNED_TYPE = [
     {'name': 'from', 'type': 'address'},
@@ -33,5 +33,6 @@ RELAY_REQUEST_SIGNED_TYPE = [
     *FORWARDER_DATA_SIGNED_TYPE,
     {'name': 'relayData', 'type': 'RelayData'},
 ]
+HASH_ZERO = '0x0000000000000000000000000000000000000000000000000000000000000000'
 DOMAIN_SEPARATOR_VERSION = '3'
 OK_RESPONSE = 200
