@@ -59,6 +59,9 @@ class RallyNetworkClient:
             )
         return transfer_txn
 
+    def set_api_key(self, api_key: str):
+        self.gsn_client.config.relayer_api_key = api_key
+
     def claim_rally(self, account: Account):
         claim_txn = self._get_rly_claim_txn_for_account(account)
         return self.relay_transaction(account, claim_txn)
