@@ -198,6 +198,9 @@ def tx_to_gsn_txn(tx: dict) -> GSNTransaction:
     }
 
 
+# def get_eip712_domain_for_permit(token_contract):
+
+
 def get_permit_txn(
     web3: Web3,
     account: Account,

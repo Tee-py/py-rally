@@ -1,12 +1,7 @@
-import os
-
 import eth_account
 import pytest
-from web3 import HTTPProvider, Web3
-from web3.middleware import geth_poa_middleware
 
 from py_rally import NetworkClientBuilder
-from py_rally.config import GSNConfig, NetworkConfig
 from py_rally.custom_types import Account, GSNTransaction, RelayRequest
 
 

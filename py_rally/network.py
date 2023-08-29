@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 
-from py_rally.gsn import RallyGSNClient
 from py_rally.abis import TOKEN_FAUCET_ABI
 from py_rally.custom_types import Account, GSNTransaction, MetaTxMethod
 from py_rally.exceptions import NetworkClientError
+from py_rally.gsn import RallyGSNClient
 from py_rally.helpers import get_execute_meta_transaction_txn, get_permit_txn, get_token_balance
 
 
