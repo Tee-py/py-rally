@@ -1,2 +1,1 @@
-from .gsn import RallyGSNClient
-from .network import RallyNetworkClient
+from .builder import NetworkClientBuilder
