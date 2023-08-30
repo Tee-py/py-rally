@@ -43,7 +43,7 @@ mumbai_network_client.token_transfer(
 ) # Rally Token supports execute meta transaction.
 ```
 
-# Calling contracts not supported by the SDK
+## Calling contracts not supported by the SDK
 The SDK allows sending transactions to the relayer API for contracts not supported by the SDK.
 The contract has to be a supported contract on Rally Protocol. Rally Protocol supports `ERC2771 compatible contracts`. For more
 information about this, visit [Rally documentation](https://docs.rallyprotocol.com/rally-mobile-sdk/sponsored-gasless-transactions/get-started#supported-contracts)

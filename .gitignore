@@ -3,6 +3,7 @@
 /.pytest_cache
 /venv
 /.venv
+dist
 .coverage
 .txt
 package-lock.json
