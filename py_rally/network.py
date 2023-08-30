@@ -70,7 +70,9 @@ class RallyNetworkClient:
         if self.gsn_client.config.gsn_config.chain_id != 80001:
             raise NetworkClientError('Can only claim RLY on Polygon Mumbai')
         account_balance = get_token_balance(
-            self.gsn_client.config.web3, self.gsn_client.config.contracts['rly_erc20'], account
+            self.gsn_client.config.web3,
+            self.gsn_client.config.contracts['rly_erc20'],
+            account,
         )
         if account_balance > 0:
             raise NetworkClientError('Address has already claimed. Unable to claim.')
