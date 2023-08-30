@@ -6,7 +6,7 @@ gasless transactions and the Rally Protocol, visit [Rally Protocol](https://docs
 
 # Installation
 ```shell
-pip install py_rally
+pip install py-rally-sdk
 ```
 
 # Usage
@@ -73,3 +73,4 @@ gsn_txn = {
 }
 tx_hash = client.relay_transaction(signer, gsn_txn)
 ```
+### Built with ❤️ by teepy🇳🇬
