@@ -104,6 +104,7 @@ ignore = [
     "UP007",
     "UP038",
     "PLR0913",
+    "PLR2004",
     "G004"  # f-strings are easier to read. Change if performance is impacted significantly.
 ]
 
