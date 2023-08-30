@@ -12,3 +12,8 @@ format:
 test:
 	@echo "Running tests..."
 	pytest --cov -s
+
+publish:
+	rm -rf dist/
+	python3.9 -m poetry build
+	twine upload dist/*
