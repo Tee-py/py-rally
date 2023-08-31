@@ -9,9 +9,9 @@ license = "MIT"
 homepage = "https://github.com/Tee-py/py-rally"
 
 [tool.poetry.dependencies]
-python = ">=3.9"
+python = ">=3.9,<4"
 requests = "2.31.0"
-web3 = "6.8.0"
+web3 = "6.9.0"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "0.0.275"
