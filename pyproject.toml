@@ -1,7 +1,7 @@
 [tool.poetry]
 name ="py-rally-sdk"
 packages = [{include = "py_rally", from = "."}]
-version = "1.0.0"
+version = "1.0.1"
 description = "Python client for RallyProtocol"
 authors = ["Tobiloba Emmanuel"]
 readme = "README.md"

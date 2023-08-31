@@ -97,7 +97,7 @@ class RallyNetworkClient:
             erc20_token,
             meta_tx_method,
         )
-        self.relay_transaction(account, transfer_txn)
+        return self.relay_transaction(account, transfer_txn)
 
     def relay_transaction(self, signer: Account, txn: GSNTransaction):
         return self.gsn_client.submit_transaction(signer, txn)
