@@ -268,7 +268,7 @@ def get_execute_meta_transaction_txn(
     except ContractLogicError:
         nonce = token_contract.functions.nonces(account.address).call()
     decimals = token_contract.functions.decimals().call()
-    decimal_amount = amount * 10**decimals
+    decimal_amount = int(amount * 10**decimals)
 
     transfer_data = token_contract.encodeABI('transfer', [to, decimal_amount])
 
