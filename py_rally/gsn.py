@@ -24,6 +24,7 @@ class RallyGSNClient:
     def _update_config(self, txn: GSNTransaction) -> None:
         response = requests.get(
             f'{self.config.gsn_config.relay_url}/getaddr',
+            headers=self.auth_header
         )
         if response.status_code != OK_RESPONSE:
             raise RallyAPIError(response.status_code, response.text)
