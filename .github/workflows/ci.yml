@@ -9,6 +9,8 @@ on:
 env:
   MUMBAI_RPC_URL: ${{ secrets.MUMBAI_RPC_URL }}
   RLY_API_KEY: ${{ secrets.RLY_API_KEY }}
+  PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+  RLY_POLYGON_API_KEY: ${{ secrets.RLY_POLYGON_API_KEY }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}

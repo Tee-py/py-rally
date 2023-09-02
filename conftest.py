@@ -1,3 +1,5 @@
+import os
+
 import eth_account
 import pytest
 
@@ -81,7 +83,7 @@ def relay_request() -> RelayRequest:
 @pytest.fixture()
 def signature_account() -> Account:
     return Account(
-        '0x18d17d375047503d4b3127a61d0ac6a37a22a3e5a11a612f853e5c5eadc37235',
+        os.getenv('PRIVATE_KEY'),
         '0x95d372A4DC5d53C9178695157c69Bf9A9CB91487',
     )
 
