@@ -88,7 +88,7 @@ def signature_account() -> Account:
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def client_account() -> Account:
     account = eth_account.Account.create()
     return Account(
